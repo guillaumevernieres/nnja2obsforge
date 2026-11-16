@@ -1,0 +1,245 @@
+# NNJA (s3://noaa-reanalyses-pds/observations/reanalysis) -> obsForge name mapping.
+#
+# Output, laid out like common_obsForge:
+#   <root>/obsforge/gdas.YYYYMMDD/HH/ocean/<kind.dir>/gdas.tHHz.<space>.nc
+#
+# kinds:  one entry per obsForge observation kind (output variable, dir, epoch, metadata).
+#   var       obsForge variable name (ObsValue/ObsError/PreQC group member)
+#   aliases   NNJA variable names to read it from, first one found wins
+#   dir       sub-directory under ocean/
+#   epoch     MetaData/dateTime reference ("seconds since <epoch>"), as obsForge
+#   meta      MetaData set written: basic | insitu | adt (see nnja2obsforge/ioda.py)
+#   valid     [min, max] of accepted ObsValue (inclusive)
+#   err       ObsError when the NNJA file has none
+#   window    optional; default 4 cycles, obs in [T-3h, T+3h).
+#             half > 3 h: obs in [T-half, T+half) re-dated into [T-3h, T+3h] as obsForge's
+#             Rads2Ioda::reDate, ObsError += redate_error_ratio [unit/day] * shift.
+#             closed: true keeps obs at exactly T+half too ([T-half, T+half]).
+#   preqc     NNJA PreQC values kept (written as PreQC 0); null keeps every obs
+#
+# spaces: obsForge name -> NNJA sources. Each source:
+#   source    prefix under observations/reanalysis; files are under <source>/YYYY/MM/
+#   files     regexes on the path below YYYY/MM/, in priority order: when several match
+#             the same file time, only the first pattern's file is used
+#   cover     [h0, h1]: the obs of a file stamped T lie in [T+h0, T+h1] (used to pick files)
+#   reader    ioda (iodav2 or iodav3, default) | pmel (GTMBA mooring files)
+# Space keys: kind (required), enabled (default true), note, and any kind key to override.
+# Names not in obsForge extend its pattern: <kind>_<platform> / <kind>_<sensor>_<sat>_<level>.
+
+kinds:
+  adt:
+    var: absoluteDynamicTopography
+    aliases: [absoluteDynamicTopography, obs_absolute_dynamic_topography, absolute_dynamic_topography]
+    dir: adt
+    epoch: '1858-11-17T00:00:00Z'
+    meta: adt
+    valid: [-4.0, 4.0]
+    err: 0.1
+    window: {cycles: [0], half: 48, redate_error_ratio: 1.0, closed: true}
+    preqc: [0]
+  insitu_temp_profile:
+    var: waterTemperature
+    aliases: [waterTemperature, sea_water_temperature]
+    dir: insitu
+    epoch: '1970-01-01T00:00:00Z'
+    meta: insitu
+    valid: [-2.5, 40.0]
+    err: 0.5
+    preqc: [0]
+  insitu_salt_profile:
+    var: salinity
+    aliases: [salinity, sea_water_salinity]
+    dir: insitu
+    epoch: '1970-01-01T00:00:00Z'
+    meta: insitu
+    valid: [0.0, 45.0]
+    err: 0.1
+    preqc: [0]
+  insitu_temp_surface:
+    var: seaSurfaceTemperature
+    aliases: [seaSurfaceTemperature, waterTemperature, sea_surface_temperature]
+    dir: insitu
+    epoch: '1970-01-01T00:00:00Z'
+    meta: insitu
+    valid: [-2.5, 40.0]
+    err: 0.5
+    preqc: [0]
+  insitu_salt_surface:
+    var: seaSurfaceSalinity
+    aliases: [seaSurfaceSalinity, salinity, sea_surface_salinity]
+    dir: insitu
+    epoch: '1970-01-01T00:00:00Z'
+    meta: insitu
+    valid: [0.0, 45.0]
+    err: 0.1
+    preqc: [0]
+  sst:
+    var: seaSurfaceTemperature
+    aliases: [seaSurfaceTemperature, sea_surface_temperature]
+    dir: sst
+    epoch: '1981-01-01T00:00:00Z'
+    meta: basic
+    valid: [-3.0, 40.0]
+    err: 0.5
+    preqc: [0]
+  sss:
+    var: seaSurfaceSalinity
+    aliases: [seaSurfaceSalinity, sea_surface_salinity]
+    dir: sss
+    epoch: '1970-01-01T00:00:00Z'
+    meta: basic
+    valid: [1.0, 45.0]
+    err: 1.0
+    preqc: [0]
+  icec:
+    var: seaIceFraction
+    aliases: [seaIceFraction, sea_ice_area_fraction, sea_ice_concentration, seaIceConcentration]
+    dir: icec
+    epoch: '1970-01-01T00:00:00Z'
+    meta: basic
+    valid: [0.0, 1.0]
+    err: 0.1
+    preqc: [0]
+  icefb:
+    var: seaIceFreeboard
+    aliases: [seaIceFreeboard, sea_ice_freeboard]
+    dir: icefb
+    epoch: '1970-01-01T00:00:00Z'
+    meta: basic
+    valid: [-0.5, 3.0]
+    err: 0.1
+    preqc: [0]
+
+# reusable source settings
+x-adt: &adt {files: ['iodav3/.*\.iodav3\.nc$'], cover: [-3, 3]}
+x-wod: &wod {cover: [-3, 3]}
+x-pmel: &pmel {reader: pmel, cover: [-12, 12]}
+x-nesdis-hourly: &nesdis_hourly
+  files: ['1h/superob_0p25/iodav3/.*\.iodav3\.so0p25\.nc$',
+          '1h/superob_0p25/iodav2/.*\.iodav2\.so0p25\.nc$',
+          '1h/superob_0p25/[^/]*\.iodav2\.so0p25\.nc$']
+  cover: [-1, 1]
+# daily files stamped 12Z hold [00Z, 24Z) of their day, some up to a day more (WindSat)
+x-daily: &daily {files: ['24h/iodav3/.*\.nc$', '24h/iodav2/.*\.nc$'], cover: [-12, 36]}
+
+spaces:
+  # ---------------------------------------------------------------- ADT (GLORe, 6-hourly)
+  rads_adt_tx: {kind: adt, sources: [{source: adt/GLORe/topex_poseidon, <<: *adt}], note: TOPEX/Poseidon}
+  rads_adt_e1: {kind: adt, sources: [{source: adt/GLORe/ers1, <<: *adt}]}
+  rads_adt_e2: {kind: adt, sources: [{source: adt/GLORe/ers2, <<: *adt}]}
+  rads_adt_g1: {kind: adt, sources: [{source: adt/GLORe/GFO, <<: *adt}], note: GFO}
+  rads_adt_j1: {kind: adt, sources: [{source: adt/GLORe/jason1, <<: *adt}]}
+  rads_adt_n1: {kind: adt, sources: [{source: adt/GLORe/n1, <<: *adt}], note: Envisat}
+  rads_adt_j2: {kind: adt, sources: [{source: adt/GLORe/jason2, <<: *adt}]}
+  rads_adt_c2: {kind: adt, sources: [{source: adt/GLORe/cryosat2, <<: *adt}]}
+  rads_adt_sa: {kind: adt, sources: [{source: adt/GLORe/saral, <<: *adt}]}
+  rads_adt_j3: {kind: adt, sources: [{source: adt/GLORe/jason3, <<: *adt}]}
+  rads_adt_3a: {kind: adt, sources: [{source: adt/GLORe/sentinel3a, <<: *adt}]}
+  rads_adt_3b: {kind: adt, sources: [{source: adt/GLORe/sentinel3b, <<: *adt}]}
+  rads_adt_6a: {kind: adt, sources: [{source: adt/GLORe/sentinel6a, <<: *adt}]}
+  rads_adt_sw: {kind: adt, sources: [{source: adt/GLORe/swot, <<: *adt}]}
+  # adt/nesdis/<sat> (to 2020) duplicates GLORe and is not mapped.
+
+  # ---------------------------------------------------------------- in situ, WOD (6-hourly)
+  insitu_temp_profile_argo:   {kind: insitu_temp_profile, sources: [{source: insitu/wod/pfl, files: ['iodav3/wod_pfl_t\.'], <<: *wod}]}
+  insitu_salt_profile_argo:   {kind: insitu_salt_profile, sources: [{source: insitu/wod/pfl, files: ['iodav3/wod_pfl_s\.'], <<: *wod}]}
+  insitu_temp_profile_glider: {kind: insitu_temp_profile, sources: [{source: insitu/wod/gld, files: ['iodav3/wod_gld_t\.'], <<: *wod}]}
+  insitu_salt_profile_glider: {kind: insitu_salt_profile, sources: [{source: insitu/wod/gld, files: ['iodav3/wod_gld_s\.'], <<: *wod}]}
+  insitu_temp_profile_xbtctd:
+    kind: insitu_temp_profile
+    note: WOD CTD + XBT
+    sources:
+      - {source: insitu/wod/ctd, files: ['iodav3/wod_ctd_t\.'], <<: *wod}
+      - {source: insitu/wod/xbt, files: ['iodav3/wod_xbt_t\.'], <<: *wod}
+  insitu_salt_profile_xbtctd: {kind: insitu_salt_profile, note: WOD CTD, sources: [{source: insitu/wod/ctd, files: ['iodav3/wod_ctd_s\.'], <<: *wod}]}
+  insitu_temp_profile_bathy:  {kind: insitu_temp_profile, note: WOD MBT, sources: [{source: insitu/wod/mbt, files: ['iodav3/wod_mbt_t\.'], <<: *wod}]}
+  insitu_temp_profile_bottle: {kind: insitu_temp_profile, note: 'WOD OSD (bottle, low-res CTD)', sources: [{source: insitu/wod/osd, files: ['iodav3/wod_osd_t\.'], <<: *wod}]}
+  insitu_salt_profile_bottle: {kind: insitu_salt_profile, note: 'WOD OSD (bottle, low-res CTD)', sources: [{source: insitu/wod/osd, files: ['iodav3/wod_osd_s\.'], <<: *wod}]}
+  insitu_temp_profile_marinemammal: {kind: insitu_temp_profile, note: WOD APB (animal-borne), sources: [{source: insitu/wod/apb, files: ['iodav3/wod_apb_t\.'], <<: *wod}]}
+  insitu_salt_profile_marinemammal: {kind: insitu_salt_profile, note: WOD APB (animal-borne), sources: [{source: insitu/wod/apb, files: ['iodav3/wod_apb_s\.'], <<: *wod}]}
+  insitu_temp_profile_drifter: {kind: insitu_temp_profile, note: WOD DRB (drifting buoys), sources: [{source: insitu/wod/drb, files: ['iodav3/wod_drb_t\.'], <<: *wod}]}
+  insitu_salt_profile_drifter: {kind: insitu_salt_profile, note: WOD DRB (drifting buoys), sources: [{source: insitu/wod/drb, files: ['iodav3/wod_drb_s\.'], <<: *wod}]}
+  insitu_temp_profile_mooring: {kind: insitu_temp_profile, note: WOD MRB (moored buoys; overlaps GTMBA below), sources: [{source: insitu/wod/mrb, files: ['iodav3/wod_mrb_t\.'], <<: *wod}]}
+  insitu_salt_profile_mooring: {kind: insitu_salt_profile, note: WOD MRB (moored buoys; overlaps GTMBA below), sources: [{source: insitu/wod/mrb, files: ['iodav3/wod_mrb_s\.'], <<: *wod}]}
+  insitu_temp_profile_uor:    {kind: insitu_temp_profile, note: WOD UOR (undulating recorders), sources: [{source: insitu/wod/uor, files: ['iodav3/wod_uor_t\.'], <<: *wod}]}
+  insitu_salt_profile_uor:    {kind: insitu_salt_profile, note: WOD UOR (undulating recorders), sources: [{source: insitu/wod/uor, files: ['iodav3/wod_uor_s\.'], <<: *wod}]}
+  # insitu/ncei/wod: daily T+S of every WOD type mixed, no platform field; duplicates
+  # insitu/wod, so off by default
+  insitu_temp_profile_wodncei: {kind: insitu_temp_profile, enabled: false, sources: [{source: insitu/ncei/wod, files: ['24h/iodav3/', '24h/iodav2/'], cover: [-12, 12]}]}
+  insitu_salt_profile_wodncei: {kind: insitu_salt_profile, enabled: false, sources: [{source: insitu/ncei/wod, files: ['24h/iodav3/', '24h/iodav2/'], cover: [-12, 12]}]}
+
+  # ---------------------------------------------------------------- in situ, GTMBA moorings (PMEL files)
+  insitu_temp_profile_taotriton: {kind: insitu_temp_profile, sources: [{source: insitu/moorings/tao/T, files: ['^tao_T_[^/]*\.nc$'], <<: *pmel}]}
+  insitu_salt_profile_taotriton: {kind: insitu_salt_profile, sources: [{source: insitu/moorings/tao/S, files: ['^tao_S_[^/]*\.nc$'], <<: *pmel}]}
+  insitu_temp_surface_taotriton: {kind: insitu_temp_surface, sources: [{source: insitu/moorings/tao/SST, files: ['^tao_SST_[^/]*\.nc$'], <<: *pmel}]}
+  insitu_salt_surface_taotriton: {kind: insitu_salt_surface, sources: [{source: insitu/moorings/tao/SSS, files: ['^tao_SSS_[^/]*\.nc$'], <<: *pmel}]}
+  insitu_temp_profile_pirata: {kind: insitu_temp_profile, sources: [{source: insitu/moorings/pirata/T, files: ['^pirata_T_[^/]*\.nc$'], <<: *pmel}]}
+  insitu_salt_profile_pirata: {kind: insitu_salt_profile, sources: [{source: insitu/moorings/pirata/S, files: ['^pirata_S_[^/]*\.nc$'], <<: *pmel}]}
+  insitu_temp_surface_pirata: {kind: insitu_temp_surface, sources: [{source: insitu/moorings/pirata/SST, files: ['^pirata_SST_[^/]*\.nc$'], <<: *pmel}]}
+  insitu_salt_surface_pirata: {kind: insitu_salt_surface, sources: [{source: insitu/moorings/pirata/SSS, files: ['^pirata_SSS_[^/]*\.nc$'], <<: *pmel}]}
+  insitu_temp_profile_rama: {kind: insitu_temp_profile, sources: [{source: insitu/moorings/rama/T, files: ['^rama_T_[^/]*\.nc$'], <<: *pmel}]}
+  insitu_salt_profile_rama: {kind: insitu_salt_profile, sources: [{source: insitu/moorings/rama/S, files: ['^rama_S_[^/]*\.nc$'], <<: *pmel}]}
+  insitu_temp_surface_rama: {kind: insitu_temp_surface, sources: [{source: insitu/moorings/rama/SST, files: ['^rama_SST_[^/]*\.nc$'], <<: *pmel}]}
+  insitu_salt_surface_rama: {kind: insitu_salt_surface, sources: [{source: insitu/moorings/rama/SSS, files: ['^rama_SSS_[^/]*\.nc$'], <<: *pmel}]}
+  # moorings/<array>/CUR (currents) has no obsForge counterpart and is not mapped.
+
+  # ---------------------------------------------------------------- SST
+  sst_avhrr_n07_l3u: {kind: sst, note: 'NESDIS AVHRR GAC, 0.25 deg superobs', sources: [{source: sst/nesdis/noaa07, <<: *nesdis_hourly}]}
+  sst_avhrr_n09_l3u: {kind: sst, note: 'NESDIS AVHRR GAC, 0.25 deg superobs', sources: [{source: sst/nesdis/noaa09, <<: *nesdis_hourly}]}
+  sst_avhrr_n11_l3u: {kind: sst, note: 'NESDIS AVHRR GAC, 0.25 deg superobs', sources: [{source: sst/nesdis/noaa11, <<: *nesdis_hourly}]}
+  sst_avhrr_n12_l3u: {kind: sst, note: 'NESDIS AVHRR GAC, 0.25 deg superobs', sources: [{source: sst/nesdis/noaa12, <<: *nesdis_hourly}]}
+  sst_avhrr_n14_l3u: {kind: sst, note: 'NESDIS AVHRR GAC, 0.25 deg superobs', sources: [{source: sst/nesdis/noaa14, <<: *nesdis_hourly}]}
+  sst_avhrr_n15_l3u: {kind: sst, note: 'NESDIS AVHRR GAC, 0.25 deg superobs', sources: [{source: sst/nesdis/noaa15, <<: *nesdis_hourly}]}
+  sst_avhrr_n16_l3u: {kind: sst, note: 'NESDIS AVHRR GAC, 0.25 deg superobs', sources: [{source: sst/nesdis/noaa16, <<: *nesdis_hourly}]}
+  sst_avhrr_n19_l3u: {kind: sst, note: NESDIS ACSPO, sources: [{source: sst/nesdis/noaa19, <<: *daily}]}
+  sst_avhrrf_ma_l3u: {kind: sst, note: NESDIS ACSPO Metop-A, sources: [{source: sst/nesdis/metopa, <<: *daily}]}
+  sst_amsr2_gw1_l3u: {kind: sst, note: NESDIS AMSR2 (GCOM-W1), sources: [{source: sst/nesdis/amsr2, <<: *daily}]}
+  sst_gmi_gpm_l3u:   {kind: sst, note: NESDIS GMI (GPM), sources: [{source: sst/nesdis/gpm, <<: *daily}]}
+  sst_windsat_cor_l3u: {kind: sst, note: JPL WindSat (Coriolis), sources: [{source: sst/jpl/coriolis, <<: *daily}]}
+  sst_avhrr_n07_l3u_cci: {kind: sst, note: ESA CCI, sources: [{source: sst/esacci/noaa07, <<: *daily}]}
+  sst_avhrr_n09_l3u_cci: {kind: sst, note: ESA CCI, sources: [{source: sst/esacci/noaa09, <<: *daily}]}
+  sst_avhrr_n11_l3u_cci: {kind: sst, note: ESA CCI, sources: [{source: sst/esacci/noaa11, <<: *daily}]}
+  sst_avhrr_n14_l3u_cci: {kind: sst, note: ESA CCI, sources: [{source: sst/esacci/noaa14, <<: *daily}]}
+  sst_avhrr_multi_l3c_cci: {kind: sst, note: 'ESA CCI, all AVHRRs', sources: [{source: sst/esacci/multi, <<: *daily}]}
+  sst_avhrr_cci20cm_l3:
+    kind: sst
+    note: ngGODAS ESA CCI 20 cm SST, 6-hourly (its ombg/oman are dropped)
+    sources: [{source: sst/nggodas/avhrr, files: ['6h/.*\.iodav3\.nc$'], cover: [-3, 3]}]
+
+  # ---------------------------------------------------------------- SSS
+  sss_smap_l2: {kind: sss, note: JPL SMAP L2 (NNJA directory says sentinel1a), sources: [{source: sss/jpl/sentinel1a, <<: *daily}]}
+
+  # ---------------------------------------------------------------- sea ice
+  # NSIDC daily concentration is stamped 12Z: each cycle takes the obs of [T-12h, T+12h),
+  # re-dated into its window without error inflation.
+  icec_nsidc_north:
+    kind: icec
+    note: NSIDC daily, re-dated into all 4 cycles (PreQC is 1 everywhere)
+    window: {half: 12, redate_error_ratio: 0.0}
+    preqc: null
+    sources: [{source: icec/GLORe/nh, files: ['24h/iodav3/.*\.nc$'], cover: [-12, 12]}]
+  icec_nsidc_south:
+    kind: icec
+    note: NSIDC daily, re-dated into all 4 cycles (PreQC is 1 everywhere)
+    window: {half: 12, redate_error_ratio: 0.0}
+    preqc: null
+    sources: [{source: icec/GLORe/sh, files: ['24h/iodav3/.*\.nc$'], cover: [-12, 12]}]
+  # EMC SSM/I and SSMIS (DMSP): PreQC 1 = retrieval, 3-5 = concentration set to 0 (masks)
+  icec_ssmi_dmsp_l2:
+    kind: icec
+    note: EMC retrieval from SSM/I (DMSP); PreQC 1 kept
+    preqc: [1]
+    sources: [{source: icec/emc/dmsp, files: ['24h/iodav3/icec\.emc\.ssmi_', '24h/iodav2/icec\.emc\.ssmi_'], cover: [-12, 12]}]
+  icec_ssmis_dmsp_l2:
+    kind: icec
+    note: EMC retrieval from SSMIS (DMSP); PreQC 1 kept
+    preqc: [1]
+    sources: [{source: icec/emc/dmsp, files: ['24h/iodav3/icec\.emc\.ssmis_', '24h/iodav2/icec\.emc\.ssmis_'], cover: [-12, 12]}]
+  # icec/nsidc/{nh,sh} (iodav2, to 2008) duplicates icec/GLORe and is not mapped.
+  # CryoSat-2 PreQC is a bit mask; only 0x2000 carries a freeboard (0 and 0x80 hold 0 m,
+  # 0x12000 negative values, the others none) -- inferred from the data, not documented
+  icefb_siral_c2_l2:
+    kind: icefb
+    note: ESA CryoSat-2 L2 freeboard; PreQC 0x2000 kept
+    preqc: [8192]
+    sources: [{source: icefb/esa/cryosat2, <<: *daily}]

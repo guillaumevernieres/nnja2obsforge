@@ -1,0 +1,11 @@
+# data and run products (not versioned)
+cache/
+obsforge/
+figures/
+logs/
+*.out
+*.part
+*.tmp
+__pycache__/
+*.pyc
+scripts/.legacy_*

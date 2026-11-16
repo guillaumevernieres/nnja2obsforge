@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Scatter maps of the NNJA ADT files of one gdas cycle, with obsForge for comparison.
 
-usage: plot_nnja_adt.py YYYYMMDDHH [--root DIR] [--obsforge DIR] [--out DIR]
+usage: scripts/plot_adt.py YYYYMMDDHH [--root DIR] [--obsforge DIR] [--out DIR]
 Needs matplotlib + cartopy, e.g. /scratch3/NCEPDEV/da/Guillaume.Vernieres/venvs/gdas-marine-viz.
 
 Figures (in --out, default <root>/figures/YYYYMMDDHH):
@@ -25,7 +25,7 @@ import netCDF4 as nc  # noqa: E402
 import numpy as np  # noqa: E402
 from matplotlib.colors import BoundaryNorm, ListedColormap  # noqa: E402
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # repository
 OBSFORGE = '/scratch3/NCEPDEV/da/common_obsForge'
 VAR = 'absoluteDynamicTopography'
 EPOCH = datetime(1858, 11, 17)
