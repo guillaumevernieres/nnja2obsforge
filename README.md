@@ -163,14 +163,10 @@ which NNJA does not carry), `mooring` (MRB), `uor`. The PMEL SST/SSS files only 
 Satellite names follow GDASApp `parm/jcb-gdas/observations/marine` (`sst_avhrr_ma_l3u`,
 `icefb_<mission>_{north,south}`, ...).
 
-GDASApp's jcb templates are picked by obs-space name, which is also the file stem
-(`{prefix}{observation}{suffix}`). Argo (`insitu_{temp,salt}_profile_argo`) and
-`insitu_temp_surface_drifter` have templates under the obsForge names; glider, xbtctd,
-bathy, marinemammal, tesac and the moorings have them under the older names
-(`insitu_profile_glider`, `insitu_profile_xbtctd`, `insitu_profile_tropical`, ...), which
-read `gdas.tHHz.insitu_profile_glider.nc` etc. and simulate waterTemperature. Assimilating
-`insitu_temp_profile_glider` therefore needs that template under the obsForge name (same
-content) or a symlink of the file to the old name.
+Files are named like the obsForge output files (`provider_var` in obsForge's
+`marine_bufr_dump_config.yaml`, e.g. provider `insitu_profile_glider` writes
+`insitu_temp_profile_glider` and `insitu_salt_profile_glider`), which is what
+`common_obsForge` holds.
 
 ### Notes on the sources
 
