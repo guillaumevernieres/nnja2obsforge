@@ -16,6 +16,8 @@
 #             Rads2Ioda::reDate, ObsError += redate_error_ratio [unit/day] * shift.
 #             closed: true keeps obs at exactly T+half too ([T-half, T+half]).
 #   preqc     NNJA PreQC values kept (written as PreQC 0); null keeps every obs
+#   profile_reject  drop a whole profile (same time and position) when this fraction of
+#             its levels fails preqc (mislocated WOD profiles are only partly flagged)
 #
 # spaces: obsForge name -> NNJA sources. Each source:
 #   source    prefix under observations/reanalysis; files are under <source>/YYYY/MM/
@@ -38,6 +40,7 @@ kinds:
     window: {cycles: [0], half: 48, redate_error_ratio: 1.0, closed: true}
     preqc: [0]
   insitu_temp_profile:
+    profile_reject: 0.05
     var: waterTemperature
     aliases: [waterTemperature, sea_water_temperature]
     dir: insitu
@@ -47,6 +50,7 @@ kinds:
     err: 0.5
     preqc: [0]
   insitu_salt_profile:
+    profile_reject: 0.05
     var: salinity
     aliases: [salinity, sea_water_salinity]
     dir: insitu

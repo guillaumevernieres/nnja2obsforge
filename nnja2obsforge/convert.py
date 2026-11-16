@@ -77,6 +77,25 @@ def gather(files, read):
     return out, used
 
 
+def profile_reject(c, ok, kind):
+    """Rows of profiles (same time and position) in which at least kind['profile_reject']
+    of the levels are rejected by the NNJA PreQC: such profiles are mislocated or bad as a
+    whole (NNJA's WOA check flags only the levels > 10 degC / 2 psu off)."""
+    frac = kind.get('profile_reject')
+    if frac is None or kind['preqc'] is None or 'depth' not in c:
+        return np.zeros(c['t'].size, bool)
+    idx = np.flatnonzero(ok)
+    key = np.stack([np.round(c['t'][idx]), np.round(c['lat'][idx] * 1e4),
+                    np.round(c['lon'][idx] * 1e4)], 1).astype(np.int64)
+    _, inv = np.unique(key, axis=0, return_inverse=True)
+    inv = inv.ravel()
+    rej = ~np.isin(c['qc'][idx], kind['preqc'])
+    share = np.bincount(inv, weights=rej) / np.bincount(inv)
+    out = np.zeros(c['t'].size, bool)
+    out[idx] = share[inv] >= frac
+    return out
+
+
 def select(c, space, beg, end):
     """Valid obs of [beg, end) ([beg, end] if window.closed), duplicates removed,
     sorted by (time, lat, lon[, depth])."""
@@ -85,12 +104,14 @@ def select(c, space, beg, end):
     e = (end - ioda.EPOCH).total_seconds()
     vmin, vmax = kind['valid']
     ok = (np.isfinite(c['t']) & np.isfinite(c['lat']) & np.isfinite(c['lon'])
-          & np.isfinite(c['y']) & (c['y'] >= vmin) & (c['y'] <= vmax)
+          & np.isfinite(c['y'])
           & (c['t'] >= b) & ((c['t'] <= e) if space.window['closed'] else (c['t'] < e)))
+    if 'depth' in c:
+        ok &= np.isfinite(c['depth']) & (c['depth'] >= 0)
+    ok &= ~profile_reject(c, ok, kind)
+    ok &= (c['y'] >= vmin) & (c['y'] <= vmax)
     if kind['preqc'] is not None:
         ok &= np.isin(c['qc'], kind['preqc'])
-    if 'depth' in c:
-        ok &= np.isfinite(c['depth'])
     c = {k: v[ok] for k, v in c.items()}
     c['t'] = np.round(c['t']).astype(np.int64)
     c['lon'] = (c['lon'] + 180.0) % 360.0 - 180.0

@@ -81,7 +81,9 @@ class File:
         self.end = t + timedelta(hours=cover[1])
 
     def overlaps(self, beg, end, closed=False):
-        return (self.beg <= end if closed else self.beg < end) and self.end >= beg
+        if closed:
+            return self.beg <= end and self.end >= beg
+        return self.beg < end and self.end > beg
 
     def __repr__(self):
         return f'File({self.key})'

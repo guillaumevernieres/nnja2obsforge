@@ -49,9 +49,12 @@ For each selected space and cycle T:
    copies, superob sub-directories); keys matching the space's `files` regexes are kept, the
    first matching pattern winning per file time (iodav3 before iodav2), and those whose
    `cover` overlaps the window are downloaded and read.
-2. **Obs.** Window `[T-3h, T+3h)` by default. Kept: finite position/time/value, value inside
-   `valid`, NNJA `PreQC` in `preqc` (written out as PreQC 0). Exact duplicates (time,
-   lat, lon[, depth]) are dropped; obs are sorted by time, lat, lon[, depth].
+2. **Obs.** Window `[T-3h, T+3h)` by default. Kept: finite position/time/value, depth >= 0,
+   value inside `valid`, NNJA `PreQC` in `preqc` (written out as PreQC 0). In situ
+   profiles: a whole profile (same time and position) is dropped when >= `profile_reject`
+   (5%) of its levels fail PreQC — WOD has mislocated profiles (e.g. 29 °C at the surface
+   at 55°S) that NNJA's WOA check flags only partly. Exact duplicates (time, lat,
+   lon[, depth]) are dropped; obs are sorted by time, lat, lon[, depth].
 3. **Re-dating** (spaces with `window.half` > 3 h), as obsForge's `Rads2Ioda::reDate`:
    obs of `[T-half, T+half)` before/after `[T-3h, T+3h]` are moved to window begin + 1 s /
    end - 1 s, ObsError grows by `redate_error_ratio` × days moved, `originalDateTime`
@@ -167,12 +170,40 @@ copy of `icec/GLORe`), mooring currents (`insitu/moorings/*/CUR`, no obsForge va
   PreQC 1 everywhere and keeps all.
 - The `valid` ranges in `mapping.yaml` are coarse gross checks, not a QC.
 
-## Checks
+## Checking a period
 
 ```bash
-python3 scripts/check_schema.py obsforge/gdas.20230101   # vs common_obsForge files of each kind
+V=/scratch3/NCEPDEV/da/Guillaume.Vernieres/venvs/gdas-marine-viz/bin/python   # scipy, matplotlib
+$V -m nnja2obsforge.check --start 20230101 --end 20230105 [--spaces ...] [--offline]
+#  -> reports/20230101-20230105/report.md (+ csv, counts.png, maps.png, diffs.png); exit 1 on FAIL
+python3 scripts/check_schema.py obsforge/gdas.20230101   # quick per-file content/schema check
 python3 scripts/plot_adt.py 2023010100                   # ADT maps vs obsForge (cartopy env)
 ```
+
+What `nnja2obsforge.check` verifies, per space and cycle:
+
+- **Completeness.** The NNJA files of each window are listed live from S3; every one must be
+  in the cache with the bucket's size (else FAIL `CACHE`). Status `OK`, `NO_SOURCE` (NNJA has
+  nothing for that window: an expected gap), `MISSING` (inputs but no file: FAIL), `EMPTY`
+  (inputs, no obs passes: WARN), `LOW` (< 30% of the space's median count: WARN).
+- **Accounting.** The inputs are re-read and the obs of the window counted through every
+  filter (bad position/depth, bad profile, PreQC, valid range, duplicates); the kept count
+  must equal the file's (FAIL otherwise). Large drop shares are WARNed.
+- **Content.** Schema against the obsForge file of the kind (variables, types, fills, epoch);
+  no missing values, PreQC 0, lat/lon/depth ranges, dateTime in [T-3h, T+3h],
+  originalDateTime in the window (equal to dateTime when not re-dated), 0 < ObsError <
+  cap, no duplicates, no record in two 6 h cycles; physical value ranges; in situ, SST,
+  SSS against WOA23 (1°, monthly/annual mean and std, downloaded once into
+  `cache/woa23`): share of obs > 6 std and median O-WOA; ADT robust outliers;
+  share of obs in RECCAP2 basin 0 (land/none).
+- **Comparison with obsForge** (`common_obsForge`, same cycles) where the same platform
+  exists: Argo and gliders collocated (5 km, 1 h, 2 m), ADT vs RADS `adt_old` (7 km, same
+  pass), NSIDC vs AMSR2 sea ice on 1° boxes.
+
+The checker was validated on a deliberately broken copy (deleted file, NaN, 45 °C, ObsError
+< 0, moved time, truncated cache file): each produced a FAIL.
+
+Database built: 2023-01-01..05 (`reports/20230101-20230105/report.md`).
 
 Verified (2026-11): ADT 2023-01-01/02 identical to the original `nnja_adt2obsforge.py`
 output; one day of every kind (2023-01-01 in situ + NSIDC ice, 2015-04-01 SSS/AVHRR/EMC
@@ -189,5 +220,7 @@ nnja2obsforge/bucket.py      S3 listing, file discovery and time stamps, downloa
 nnja2obsforge/ioda.py        NNJA readers (IODA v2/v3, PMEL), obsForge writer, ocean basins
 nnja2obsforge/convert.py     windows, selection, de-duplication, re-dating
 nnja2obsforge/mapping.py     mapping.yaml loader
+nnja2obsforge/check.py       database check (inventory, accounting, report)
+nnja2obsforge/qa.py          file content checks, WOA23, obsForge comparison
 scripts/                     slurm wrapper, schema check, ADT plots
 ```
