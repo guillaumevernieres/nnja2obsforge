@@ -223,7 +223,8 @@ def main(argv=None):
                         refrows.append(dict(space=s.name, cycle=row['cycle'],
                                             ref=os.path.relpath(rp, args.ref), **r))
             # B. accounting
-            if mine and not bad:
+            by_obsforge = any(src['reader'] == 'obsforge' for _, src in mine)
+            if mine and not bad and not by_obsforge:
                 c, used = convert.gather([(f, src, s.kind) for f, src in mine], reader)
                 if c is not None:
                     a = account(c, s, wb, we)
@@ -252,6 +253,8 @@ def main(argv=None):
                 kept = acc[-1]['kept'] if acc and acc[-1]['cycle'] == row['cycle'] \
                     and acc[-1]['space'] == s.name else None
                 row['status'] = 'EMPTY' if kept == 0 else 'MISSING'
+                if by_obsforge:
+                    flag('INFO', s.name, cycle, 'run python -m nnja2obsforge.obsforge_bufr')
             else:
                 row['status'] = 'OK'
             if row['status'] == 'MISSING':

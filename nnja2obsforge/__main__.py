@@ -85,6 +85,9 @@ def main(argv=None):
     basins = ioda.Basins(args.basin_file)
     total = {}
     for name, (s, cyc, files) in plan.items():
+        if s.sources and all(src['reader'] == 'obsforge' for src in s.sources):
+            log.info('%s: converted by obsForge (python -m nnja2obsforge.obsforge_bufr)', name)
+            continue
         counts = convert.run_space(s, cyc, files, cache, out, basins, args.run)
         for c, n in counts.items():
             total.setdefault(c, {})[name] = n

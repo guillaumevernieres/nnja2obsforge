@@ -26,7 +26,9 @@
 #   files     regexes on the path below YYYY/MM/, in priority order: when several match
 #             the same file time, only the first pattern's file is used
 #   cover     [h0, h1]: the obs of a file stamped T lie in [T+h0, T+h1] (used to pick files)
-#   reader    ioda (iodav2 or iodav3, default) | pmel (GTMBA mooring files)
+#   reader    ioda (iodav2 or iodav3, default) | pmel (GTMBA mooring files) |
+#             obsforge (NCEP BUFR dump converted by obsForge itself, see
+#             nnja2obsforge/obsforge_bufr.py; the main converter only fetches it)
 # Space keys: kind (required), enabled (default true), note, and any kind key to override.
 # Names: obsForge's (obsForge parm/marine_bufr_dump_config.yaml for in situ, its output in
 # common_obsForge, GDASApp parm/jcb-gdas/observations/marine for satellites). Names not in
@@ -221,6 +223,18 @@ spaces:
       - {source: insitu/moorings/rama/S, files: ['^rama_S_[^/]*\.nc$'], <<: *pmel}
       - {source: insitu/moorings/rama/SSS, files: ['^rama_SSS_[^/]*\.nc$'], <<: *pmel}
   # moorings/<array>/CUR (currents) has no obsForge counterpart and is not mapped.
+
+  # ---------------------------------------------------------------- in situ, NCEP BUFR (obsForge)
+  # conv/convbufr/sfcshp: NCEP surface-marine dumps, split and converted by obsForge's own
+  # marine BUFR task (sorc/obsForge): python -m nnja2obsforge.obsforge_bufr
+  insitu_temp_surface_drifter:
+    kind: insitu_temp_surface
+    note: drifting buoys (sfcshp NC001102 dbuoyb), converted by obsForge
+    sources: [{source: conv/convbufr/sfcshp, files: ['sfcshp\.bufr_d'], cover: [-3, 3], reader: obsforge}]
+  insitu_temp_surface_ndbc:
+    kind: insitu_temp_surface
+    note: moored buoys (sfcshp NC001103 mbuoyb), converted by obsForge
+    sources: [{source: conv/convbufr/sfcshp, files: ['sfcshp\.bufr_d'], cover: [-3, 3], reader: obsforge}]
 
   # ---------------------------------------------------------------- SST
   sst_avhrr_n07_l3u: {kind: sst, note: 'NESDIS AVHRR GAC, 0.25 deg superobs', sources: [{source: sst/nesdis/noaa07, <<: *nesdis_hourly}]}

@@ -40,6 +40,36 @@ default runs only when named exactly. Existing files are overwritten.
 
 `cache/` mirrors the bucket keys; `obsforge/`, `cache/`, `figures/` and logs are not versioned.
 
+## NCEP BUFR dumps via obsForge (drifters, moored buoys)
+
+NNJA also keeps the NCEP surface-marine BUFR dumps
+(`conv/convbufr/sfcshp/YYYY/MM/gdas.YYYYMMDD.tHHz.sfcshp.bufr_d.nr`, 1979-2026). These are
+converted by obsForge itself, a submodule built once:
+
+```bash
+git submodule update --init --recursive
+# compute nodes have no internet: fetch spoc's aux tarball on a login node first
+d=sorc/obsForge/build/obsForge/sorc/spoc/dump/aux; mkdir -p $d
+curl -o $d/spoc_aux-8c40de.tgz https://ftp.emc.ncep.noaa.gov/static_files/public/spoc_aux/spoc_aux-8c40de.tgz
+(cd $d && tar xzf spoc_aux-8c40de.tgz)
+sbatch scripts/build_obsforge.sh -c "-DBUILD_TESTING=OFF"     # ~minutes on u1-compute
+```
+
+then, per period:
+
+```bash
+python3 -m nnja2obsforge.obsforge_bufr --start 20230101 --end 20230105 --fetch-only  # internet
+scripts/run_obsforge_bufr.sh 20230101 20230105        # obsForge modules; login node is fine
+```
+
+`nnja2obsforge/obsforge_bufr.py` links the cached dumps where obsForge's marine BUFR task
+(`MarineBufrObsPrep`) expects them, runs it per cycle with the providers that read sfcshp
+subsets (split with `split_by_subset`, converted by obsForge's `bufr2ioda_*.py`,
+windowed by `obsforge_obsprovider2ioda.x`) in a scratch COMROOT (`work/obsforge_bufr`),
+and copies `insitu_temp_surface_drifter` and `insitu_temp_surface_ndbc` into the database
+(`--install all` copies every product, including obsForge's BUFR moorings, which the
+database takes from the PMEL files instead). The main converter only fetches these dumps.
+
 ## What a file contains
 
 For each selected space and cycle T:
@@ -120,6 +150,8 @@ To add or rename a space, edit `mapping.yaml`; `--list` regenerates this table.
 | `insitu_salt_profile_pirata` | insitu | salinity | `insitu/moorings/pirata/S`<br>`insitu/moorings/pirata/SSS` |  |
 | `insitu_temp_profile_rama` | insitu | waterTemperature | `insitu/moorings/rama/T`<br>`insitu/moorings/rama/SST` |  |
 | `insitu_salt_profile_rama` | insitu | salinity | `insitu/moorings/rama/S`<br>`insitu/moorings/rama/SSS` |  |
+| `insitu_temp_surface_drifter` | insitu | seaSurfaceTemperature | `conv/convbufr/sfcshp` | drifting buoys (sfcshp NC001102 dbuoyb), converted by obsForge |
+| `insitu_temp_surface_ndbc` | insitu | seaSurfaceTemperature | `conv/convbufr/sfcshp` | moored buoys (sfcshp NC001103 mbuoyb), converted by obsForge |
 | `sst_avhrr_n07_l3u` | sst | seaSurfaceTemperature | `sst/nesdis/noaa07` | NESDIS AVHRR GAC, 0.25 deg superobs |
 | `sst_avhrr_n09_l3u` | sst | seaSurfaceTemperature | `sst/nesdis/noaa09` | NESDIS AVHRR GAC, 0.25 deg superobs |
 | `sst_avhrr_n11_l3u` | sst | seaSurfaceTemperature | `sst/nesdis/noaa11` | NESDIS AVHRR GAC, 0.25 deg superobs |

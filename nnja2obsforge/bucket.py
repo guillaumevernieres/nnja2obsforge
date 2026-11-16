@@ -21,7 +21,7 @@ PREFIX = 'observations/reanalysis'
 _S3 = '{http://s3.amazonaws.com/doc/2006-03-01/}'
 # file time in a basename: 20230101.T060000Z, 20230101.T06z, 20240101T06, 2024-01-01T03,
 # 20150401.T120000, or a bare date (adt_n1_20020828_iodav2.nc)
-_TIME = re.compile(r'(?<!\d)(\d{4})-?(\d{2})-?(\d{2})(?:[._]?T(\d{2})\d*)?(?!\d)')
+_TIME = re.compile(r'(?<!\d)(\d{4})-?(\d{2})-?(\d{2})(?:[._]?[Tt](\d{2})\d*)?(?!\d)')
 
 
 def file_time(name):

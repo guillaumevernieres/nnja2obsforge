@@ -1,0 +1,4 @@
+[submodule "sorc/obsForge"]
+	path = sorc/obsForge
+	url = https://github.com/NOAA-EMC/obsForge.git
+	ignore = untracked
