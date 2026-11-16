@@ -27,6 +27,7 @@ import logging
 import os
 import sys
 from collections import defaultdict
+from datetime import timedelta
 
 import numpy as np
 
@@ -101,6 +102,8 @@ def account(c, space, beg, end):
         a['preqc'] = 0
     lo, hi = kind['valid']
     v = (c['y'] >= lo) & (c['y'] <= hi)
+    if kind.get('lat_range'):
+        v &= (c['lat'] >= kind['lat_range'][0]) & (c['lat'] < kind['lat_range'][1])
     a['valid'] = int((keep & ~v).sum())
     keep &= v
     keys = [np.round(c['t'][keep]), np.round(c['lat'][keep] * 1e5),
@@ -268,6 +271,19 @@ def main(argv=None):
                     r['status'] = 'LOW'
                     issues.append(('WARN', s.name, r['cycle'],
                                    f"{r['n_obs']} obs, < 30% of the median {med:.0f}"))
+
+    # output files of the period whose space is not in the mapping (renamed/removed names)
+    known = {s.name for s in mapping.load(args.mapping)}
+    import glob
+    d = first
+    while d <= last:
+        for f in sorted(glob.glob(os.path.join(out, f'{args.run}.{d:%Y%m%d}', '??', 'ocean',
+                                               '*', f'{args.run}.t??z.*.nc'))):
+            name = os.path.basename(f).split('.', 2)[2][:-3]
+            if name not in known:
+                issues.append(('WARN', name, f'{d:%Y%m%d}' + f.split(os.sep)[-4],
+                               f'STALE: {os.path.relpath(f, out)} is not a mapped space'))
+        d += timedelta(days=1)
 
     def write_csv(name, rows):
         if not rows:

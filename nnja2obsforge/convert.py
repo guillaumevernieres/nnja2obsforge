@@ -110,9 +110,13 @@ def select(c, space, beg, end):
         ok &= np.isfinite(c['depth']) & (c['depth'] >= 0)
     ok &= ~profile_reject(c, ok, kind)
     ok &= (c['y'] >= vmin) & (c['y'] <= vmax)
+    if kind.get('lat_range'):
+        ok &= (c['lat'] >= kind['lat_range'][0]) & (c['lat'] < kind['lat_range'][1])
     if kind['preqc'] is not None:
         ok &= np.isin(c['qc'], kind['preqc'])
     c = {k: v[ok] for k, v in c.items()}
+    if kind.get('err_fixed') is not None:
+        c['err'] = np.full(c['t'].size, float(kind['err_fixed']))
     c['t'] = np.round(c['t']).astype(np.int64)
     c['lon'] = (c['lon'] + 180.0) % 360.0 - 180.0
     keys = [c['t'], np.round(c['lat'] * 1e5).astype(np.int64),

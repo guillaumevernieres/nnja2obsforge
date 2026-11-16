@@ -106,26 +106,20 @@ To add or rename a space, edit `mapping.yaml`; `--list` regenerates this table.
 | `insitu_salt_profile_bottle` | insitu | salinity | `insitu/wod/osd` | WOD OSD (bottle, low-res CTD) |
 | `insitu_temp_profile_marinemammal` | insitu | waterTemperature | `insitu/wod/apb` | WOD APB (animal-borne) |
 | `insitu_salt_profile_marinemammal` | insitu | salinity | `insitu/wod/apb` | WOD APB (animal-borne) |
-| `insitu_temp_profile_drifter` | insitu | waterTemperature | `insitu/wod/drb` | WOD DRB (drifting buoys) |
-| `insitu_salt_profile_drifter` | insitu | salinity | `insitu/wod/drb` | WOD DRB (drifting buoys) |
+| `insitu_temp_profile_itp` | insitu | waterTemperature | `insitu/wod/drb` | WOD DRB (ice-tethered profilers) |
+| `insitu_salt_profile_itp` | insitu | salinity | `insitu/wod/drb` | WOD DRB (ice-tethered profilers) |
 | `insitu_temp_profile_mooring` | insitu | waterTemperature | `insitu/wod/mrb` | WOD MRB (moored buoys; overlaps GTMBA below) |
 | `insitu_salt_profile_mooring` | insitu | salinity | `insitu/wod/mrb` | WOD MRB (moored buoys; overlaps GTMBA below) |
 | `insitu_temp_profile_uor` | insitu | waterTemperature | `insitu/wod/uor` | WOD UOR (undulating recorders) |
 | `insitu_salt_profile_uor` | insitu | salinity | `insitu/wod/uor` | WOD UOR (undulating recorders) |
 | `insitu_temp_profile_wodncei` | insitu | waterTemperature | `insitu/ncei/wod` | (off by default) |
 | `insitu_salt_profile_wodncei` | insitu | salinity | `insitu/ncei/wod` | (off by default) |
-| `insitu_temp_profile_taotriton` | insitu | waterTemperature | `insitu/moorings/tao/T` |  |
-| `insitu_salt_profile_taotriton` | insitu | salinity | `insitu/moorings/tao/S` |  |
-| `insitu_temp_surface_taotriton` | insitu | seaSurfaceTemperature | `insitu/moorings/tao/SST` |  |
-| `insitu_salt_surface_taotriton` | insitu | seaSurfaceSalinity | `insitu/moorings/tao/SSS` |  |
-| `insitu_temp_profile_pirata` | insitu | waterTemperature | `insitu/moorings/pirata/T` |  |
-| `insitu_salt_profile_pirata` | insitu | salinity | `insitu/moorings/pirata/S` |  |
-| `insitu_temp_surface_pirata` | insitu | seaSurfaceTemperature | `insitu/moorings/pirata/SST` |  |
-| `insitu_salt_surface_pirata` | insitu | seaSurfaceSalinity | `insitu/moorings/pirata/SSS` |  |
-| `insitu_temp_profile_rama` | insitu | waterTemperature | `insitu/moorings/rama/T` |  |
-| `insitu_salt_profile_rama` | insitu | salinity | `insitu/moorings/rama/S` |  |
-| `insitu_temp_surface_rama` | insitu | seaSurfaceTemperature | `insitu/moorings/rama/SST` |  |
-| `insitu_salt_surface_rama` | insitu | seaSurfaceSalinity | `insitu/moorings/rama/SSS` |  |
+| `insitu_temp_profile_taotriton` | insitu | waterTemperature | `insitu/moorings/tao/T`<br>`insitu/moorings/tao/SST` |  |
+| `insitu_salt_profile_taotriton` | insitu | salinity | `insitu/moorings/tao/S`<br>`insitu/moorings/tao/SSS` |  |
+| `insitu_temp_profile_pirata` | insitu | waterTemperature | `insitu/moorings/pirata/T`<br>`insitu/moorings/pirata/SST` |  |
+| `insitu_salt_profile_pirata` | insitu | salinity | `insitu/moorings/pirata/S`<br>`insitu/moorings/pirata/SSS` |  |
+| `insitu_temp_profile_rama` | insitu | waterTemperature | `insitu/moorings/rama/T`<br>`insitu/moorings/rama/SST` |  |
+| `insitu_salt_profile_rama` | insitu | salinity | `insitu/moorings/rama/S`<br>`insitu/moorings/rama/SSS` |  |
 | `sst_avhrr_n07_l3u` | sst | seaSurfaceTemperature | `sst/nesdis/noaa07` | NESDIS AVHRR GAC, 0.25 deg superobs |
 | `sst_avhrr_n09_l3u` | sst | seaSurfaceTemperature | `sst/nesdis/noaa09` | NESDIS AVHRR GAC, 0.25 deg superobs |
 | `sst_avhrr_n11_l3u` | sst | seaSurfaceTemperature | `sst/nesdis/noaa11` | NESDIS AVHRR GAC, 0.25 deg superobs |
@@ -134,7 +128,7 @@ To add or rename a space, edit `mapping.yaml`; `--list` regenerates this table.
 | `sst_avhrr_n15_l3u` | sst | seaSurfaceTemperature | `sst/nesdis/noaa15` | NESDIS AVHRR GAC, 0.25 deg superobs |
 | `sst_avhrr_n16_l3u` | sst | seaSurfaceTemperature | `sst/nesdis/noaa16` | NESDIS AVHRR GAC, 0.25 deg superobs |
 | `sst_avhrr_n19_l3u` | sst | seaSurfaceTemperature | `sst/nesdis/noaa19` | NESDIS ACSPO |
-| `sst_avhrrf_ma_l3u` | sst | seaSurfaceTemperature | `sst/nesdis/metopa` | NESDIS ACSPO Metop-A |
+| `sst_avhrr_ma_l3u` | sst | seaSurfaceTemperature | `sst/nesdis/metopa` | NESDIS ACSPO Metop-A (AVHRR GAC) |
 | `sst_amsr2_gw1_l3u` | sst | seaSurfaceTemperature | `sst/nesdis/amsr2` | NESDIS AMSR2 (GCOM-W1) |
 | `sst_gmi_gpm_l3u` | sst | seaSurfaceTemperature | `sst/nesdis/gpm` | NESDIS GMI (GPM) |
 | `sst_windsat_cor_l3u` | sst | seaSurfaceTemperature | `sst/jpl/coriolis` | JPL WindSat (Coriolis) |
@@ -149,10 +143,34 @@ To add or rename a space, edit `mapping.yaml`; `--list` regenerates this table.
 | `icec_nsidc_south` | icec | seaIceFraction | `icec/GLORe/sh` | NSIDC daily, re-dated into all 4 cycles (PreQC is 1 everywhere) |
 | `icec_ssmi_dmsp_l2` | icec | seaIceFraction | `icec/emc/dmsp` | EMC retrieval from SSM/I (DMSP); PreQC 1 kept |
 | `icec_ssmis_dmsp_l2` | icec | seaIceFraction | `icec/emc/dmsp` | EMC retrieval from SSMIS (DMSP); PreQC 1 kept |
-| `icefb_siral_c2_l2` | icefb | seaIceFreeboard | `icefb/esa/cryosat2` | ESA CryoSat-2 L2 freeboard; PreQC 0x2000 kept |
+| `icefb_cryosat2_north` | icefb | seaIceFreeboard | `icefb/esa/cryosat2` | ESA CryoSat-2 L2 freeboard; PreQC 0x2000 kept |
+| `icefb_cryosat2_south` | icefb | seaIceFreeboard | `icefb/esa/cryosat2` | ESA CryoSat-2 L2 freeboard; PreQC 0x2000 kept |
 
 Not mapped: `adt/nesdis/*` (to 2020, same missions as GLORe), `icec/nsidc/{nh,sh}` (iodav2
 copy of `icec/GLORe`), mooring currents (`insitu/moorings/*/CUR`, no obsForge variable).
+
+### Names vs obsForge and GDASApp
+
+In situ names are those obsForge writes (`parm/marine_bufr_dump_config.yaml` in obsForge,
+files in `common_obsForge`): `insitu_{temp,salt}_profile_{argo,glider,xbtctd,pirata,rama,
+taotriton}`, `insitu_temp_profile_bathy`; their ObsError is obsForge's constant for the
+platform (argo/glider/moorings 0.02 °C, 0.01 psu; xbtctd 0.12 °C, 1.0 psu; bathy 0.24 °C).
+WOD platforms obsForge does not have keep NNJA's ObsError (0.5) under extended names:
+`bottle` (OSD), `marinemammal` (APB), `itp` (DRB: drifting-buoy profiles, i.e.
+ice-tethered profilers — not obsForge's `insitu_temp_surface_drifter`, surface drifter SST,
+which NNJA does not carry), `mooring` (MRB), `uor`. The PMEL SST/SSS files only repeat the
+1 m level of the mooring T/S files, so they feed the profile spaces (no surface spaces).
+Satellite names follow GDASApp `parm/jcb-gdas/observations/marine` (`sst_avhrr_ma_l3u`,
+`icefb_<mission>_{north,south}`, ...).
+
+GDASApp's jcb templates are picked by obs-space name, which is also the file stem
+(`{prefix}{observation}{suffix}`). Argo (`insitu_{temp,salt}_profile_argo`) and
+`insitu_temp_surface_drifter` have templates under the obsForge names; glider, xbtctd,
+bathy, marinemammal, tesac and the moorings have them under the older names
+(`insitu_profile_glider`, `insitu_profile_xbtctd`, `insitu_profile_tropical`, ...), which
+read `gdas.tHHz.insitu_profile_glider.nc` etc. and simulate waterTemperature. Assimilating
+`insitu_temp_profile_glider` therefore needs that template under the obsForge name (same
+content) or a symlink of the file to the old name.
 
 ### Notes on the sources
 

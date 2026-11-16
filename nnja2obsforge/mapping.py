@@ -8,7 +8,7 @@ import yaml
 DEFAULT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                        'mapping.yaml')
 KIND_KEYS = ('var', 'aliases', 'dir', 'epoch', 'meta', 'valid', 'err', 'window', 'preqc',
-             'profile_reject')
+             'profile_reject', 'err_fixed', 'lat_range')
 SOURCE_KEYS = {'source', 'files', 'cover', 'reader'}
 WINDOW = {'cycles': [0, 6, 12, 18], 'half': 3, 'redate_error_ratio': 0.0, 'closed': False}
 
